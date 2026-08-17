@@ -6,27 +6,32 @@
 <title>Iron Log</title>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #111;
-  color: white;
+  color: #fff;
 }
 
 .header {
   background: #1b1b1b;
-  padding: 25px;
+  padding: 25px 15px;
   text-align: center;
   border-bottom: 2px solid #333;
 }
 
 .header h1 {
   margin: 0;
-  font-size: 36px;
+  font-size: 38px;
 }
 
 .header p {
   color: #aaa;
+  margin-bottom: 0;
 }
 
 .container {
@@ -38,12 +43,16 @@ body {
 .card {
   background: #1d1d1d;
   border: 1px solid #333;
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 20px;
   margin-bottom: 20px;
 }
 
-button {
+.card h2 {
+  margin-top: 0;
+}
+
+.button {
   width: 100%;
   padding: 16px;
   margin: 7px 0;
@@ -55,56 +64,118 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+.button:hover {
   background: #3a3a3a;
+}
+
+.back-button {
+  background: #444;
+}
+
+.complete-button {
+  background: #1f5c35;
 }
 
 .exercise {
   border-top: 1px solid #333;
-  padding: 15px 0;
+  padding: 18px 0;
 }
 
 .exercise h3 {
-  margin-bottom: 5px;
+  margin: 0 0 6px 0;
 }
 
 .last {
   color: #aaa;
-  margin-bottom: 10px;
+  margin: 6px 0 12px 0;
 }
 
-.set {
+.set-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin: 8px 0;
+  gap: 8px;
+  margin: 9px 0;
+  flex-wrap: wrap;
 }
 
-.set input {
-  width: 80px;
+.set-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.number-input {
+  width: 75px;
   padding: 8px;
   background: #222;
   color: white;
   border: 1px solid #555;
   border-radius: 6px;
+  font-size: 15px;
 }
 
-.set input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+.drop {
+  color: #999;
+  font-size: 14px;
+  margin-top: 12px;
 }
 
-.back {
-  background: #444;
+.stat {
+  display: inline-block;
+  width: 31%;
+  text-align: center;
+  padding: 12px 2px;
+}
+
+.stat-number {
+  font-size: 27px;
+  font-weight: bold;
+}
+
+.stat-label {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.pr {
+  padding: 11px 0;
+  border-bottom: 1px solid #333;
+}
+
+.workout-date {
+  color: #aaa;
+  font-size: 14px;
 }
 
 .hidden {
   display: none;
 }
 
-.pr {
-  padding: 10px 0;
-  border-bottom: 1px solid #333;
+.success {
+  text-align: center;
+  padding: 30px 10px;
+}
+
+.success h2 {
+  font-size: 30px;
+}
+
+.cardio {
+  background: #202020;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+@media (max-width: 600px) {
+  .stat {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .header h1 {
+    font-size: 32px;
+  }
 }
 </style>
 </head>
@@ -118,48 +189,157 @@ button:hover {
 
 <div class="container">
 
+  <!-- DASHBOARD -->
   <div id="home">
 
     <div class="card">
       <h2>Welcome to Iron Log</h2>
-      <p>Your personal fitness tracker.</p>
+      <p>Your personal fitness tracker is getting stronger.</p>
+    </div>
+
+    <div class="card">
+      <h2>📊 Your Stats</h2>
+
+      <div class="stat">
+        <div class="stat-number">7</div>
+        <div class="stat-label">Workouts</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-number">4</div>
+        <div class="stat-label">Training Days</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-number">30</div>
+        <div class="stat-label">Min Cardio</div>
+      </div>
     </div>
 
     <div class="card">
       <h2>💪 Start Workout</h2>
 
-      <button onclick="showWorkout('push')">Push Day</button>
-      <button onclick="showWorkout('pull')">Pull Day</button>
-      <button onclick="showWorkout('legs')">Leg Day</button>
-      <button onclick="showWorkout('shoulders')">Shoulders</button>
-      <button onclick="showWorkout('core')">Core</button>
+      <button class="button" onclick="showWorkout('push')">
+        Push Day
+      </button>
+
+      <button class="button" onclick="showWorkout('pull')">
+        Pull Day
+      </button>
+
+      <button class="button" onclick="showWorkout('legs')">
+        Leg Day
+      </button>
+
+      <button class="button" onclick="showWorkout('shoulders')">
+        Shoulders & Abs
+      </button>
     </div>
 
     <div class="card">
       <h2>🏆 Current PRs</h2>
 
-      <div class="pr">Bench Press — <strong>125 × 10</strong></div>
-      <div class="pr">Squat — <strong>175 × 10</strong></div>
-      <div class="pr">Deadlift — <strong>135 × 10</strong></div>
-      <div class="pr">Lat Pulldown — <strong>160 × 10</strong></div>
+      <div class="pr">
+        Bench Press — <strong>125 × 10</strong>
+      </div>
+
+      <div class="pr">
+        Squat — <strong>175 × 10</strong>
+      </div>
+
+      <div class="pr">
+        Deadlift — <strong>135 × 10</strong>
+      </div>
+
+      <div class="pr">
+        Wide Grip Lat Pulldown — <strong>160 × 10</strong>
+      </div>
+
+      <div class="pr">
+        Dumbbell Calf Raise — <strong>105 × 20</strong>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📅 Recent Workouts</h2>
+
+      <div class="pr">
+        <strong>8/16/26</strong> — Shoulders & Abs
+      </div>
+
+      <div class="pr">
+        <strong>8/15/26</strong> — Legs
+      </div>
+
+      <div class="pr">
+        <strong>8/14/26</strong> — Back & Biceps
+      </div>
+
+      <div class="pr">
+        <strong>8/13/26</strong> — Chest & Triceps
+      </div>
     </div>
 
   </div>
 
 
+  <!-- WORKOUT SCREEN -->
   <div id="workout" class="hidden">
 
-    <button class="back" onclick="goHome()">← Back to Dashboard</button>
+    <button class="button back-button" onclick="goHome()">
+      ← Back to Dashboard
+    </button>
 
     <div class="card">
-      <h2 id="workoutTitle"></h2>
-      <p>Tap "Same as Last Workout" if nothing changed.</p>
 
-      <button onclick="sameAsLast()">🔄 Same as Last Workout</button>
+      <h2 id="workoutTitle"></h2>
+
+      <p>
+        Your previous workout is already loaded.
+        If nothing changed, use:
+      </p>
+
+      <button class="button" onclick="sameAsLast()">
+        🔄 Same as Last Workout
+      </button>
 
       <div id="exerciseList"></div>
 
-      <button onclick="finishWorkout()">✅ Finish Workout</button>
+      <div class="cardio">
+        <h3>🚴 Cardio</h3>
+        <p><strong>Exercise Bike — 30 minutes</strong></p>
+        <label>
+          <input type="checkbox" id="cardioCheck">
+          Cardio Complete
+        </label>
+      </div>
+
+      <button class="button complete-button" onclick="finishWorkout()">
+        ✅ Finish Workout
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- COMPLETE SCREEN -->
+  <div id="complete" class="hidden">
+
+    <div class="card success">
+
+      <h2>🔥 Workout Complete!</h2>
+
+      <p id="completeMessage"></p>
+
+      <p>
+        🚴 30 minutes of cardio logged.
+      </p>
+
+      <button class="button" onclick="goHome()">
+        ← Back to Iron Log
+      </button>
+
     </div>
 
   </div>
@@ -174,6 +354,7 @@ const workouts = {
   push: {
     title: "💪 Push Day",
     exercises: [
+
       {
         name: "Bench Press",
         weight: 125,
@@ -181,20 +362,23 @@ const workouts = {
         sets: 3,
         drops: "115 × 12, 105 × 12, 95 × 12, 85 × 12, 75 × 12, 65 × 12, 55 × 12, 45 × 12"
       },
+
       {
-        name: "Incline Bench Press",
+        name: "Incline Bench",
         weight: 95,
         reps: 10,
         sets: 3,
         drops: "85 × 12, 75 × 12, 65 × 12, 55 × 12, 45 × 12"
       },
+
       {
-        name: "Seated Cable Fly",
+        name: "Seated Cable Flys",
         weight: 50,
         reps: 10,
         sets: 3,
         drops: "40 × 12, 30 × 15, 20 × 15"
       },
+
       {
         name: "Tricep Rope Extension",
         weight: 90,
@@ -202,6 +386,7 @@ const workouts = {
         sets: 3,
         drops: "80 × 12, 70 × 12, 60 × 12, 50 × 12, 40 × 15, 30 × 15, 20 × 15"
       },
+
       {
         name: "Behind the Head Tricep Extension",
         weight: 70,
@@ -209,12 +394,15 @@ const workouts = {
         sets: 3,
         drops: "60 × 12, 50 × 12, 40 × 12, 30 × 12, 20 × 15"
       }
+
     ]
   },
 
+
   pull: {
-    title: "💪 Pull Day",
+    title: "💪 Back & Biceps",
     exercises: [
+
       {
         name: "Wide Grip Lat Pulldown",
         weight: 160,
@@ -222,6 +410,7 @@ const workouts = {
         sets: 3,
         drops: "150 × 12, 140 × 12, 130 × 12, 120 × 12, 110 × 12, 100 × 12"
       },
+
       {
         name: "Seated Row",
         weight: 140,
@@ -229,6 +418,7 @@ const workouts = {
         sets: 3,
         drops: "130 × 12, 120 × 12, 110 × 12, 100 × 12, 90 × 12, 80 × 12"
       },
+
       {
         name: "Rope Face Pulls",
         weight: 70,
@@ -236,6 +426,7 @@ const workouts = {
         sets: 3,
         drops: "60 × 12, 50 × 12, 40 × 12, 30 × 12, 20 × 12"
       },
+
       {
         name: "Bent Over Barbell Rows",
         weight: 135,
@@ -243,6 +434,7 @@ const workouts = {
         sets: 3,
         drops: "125 × 12, 115 × 12, 105 × 12, 95 × 12, 85 × 12, 75 × 12, 65 × 12, 55 × 12, 45 × 12"
       },
+
       {
         name: "Dumbbell Preacher Curls",
         weight: 22.5,
@@ -250,6 +442,7 @@ const workouts = {
         sets: 3,
         drops: "20 × 12, 17.5 × 12, 15 × 12, 12.5 × 12, 10 × 12, 7.5 × 12, 5 × 12"
       },
+
       {
         name: "Seated Dumbbell Curls",
         weight: 17.5,
@@ -257,6 +450,7 @@ const workouts = {
         sets: 3,
         drops: "15 × 12, 12.5 × 12, 10 × 12, 7.5 × 12, 5 × 12"
       },
+
       {
         name: "Hammer Curls",
         weight: 17.5,
@@ -264,12 +458,15 @@ const workouts = {
         sets: 3,
         drops: "15 × 12, 12.5 × 12, 10 × 12, 7.5 × 12, 5 × 12"
       }
+
     ]
   },
+
 
   legs: {
     title: "🦵 Leg Day",
     exercises: [
+
       {
         name: "Squats",
         weight: 175,
@@ -277,6 +474,7 @@ const workouts = {
         sets: 3,
         drops: "165 × 12, 155 × 12, 145 × 12, 135 × 12, 125 × 12, 115 × 12, 105 × 12, 95 × 12, 85 × 12, 75 × 12, 65 × 12, 55 × 12, 45 × 12"
       },
+
       {
         name: "Deadlift",
         weight: 135,
@@ -284,6 +482,7 @@ const workouts = {
         sets: 3,
         drops: "115 × 12, 95 × 12, 65 × 12"
       },
+
       {
         name: "Dumbbell Calf Raises",
         weight: 105,
@@ -291,17 +490,72 @@ const workouts = {
         sets: 3,
         drops: "100 × 20 × 3, 90 × 20 × 3"
       }
+
     ]
   },
 
-  shoulders: {
-    title: "🏋️ Shoulders",
-    exercises: []
-  },
 
-  core: {
-    title: "🔥 Core",
-    exercises: []
+  shoulders: {
+    title: "🏋️ Shoulders & Abs",
+    exercises: [
+
+      {
+        name: "Shoulder Press",
+        weight: 85,
+        reps: 10,
+        sets: 3,
+        drops: "75 × 12, 65 × 12, 55 × 12, 45 × 12"
+      },
+
+      {
+        name: "Dumbbell Lateral Raises",
+        weight: 15,
+        reps: 10,
+        sets: 3,
+        drops: "12.5 × 12, 10 × 12, 7.5 × 12, 5 × 12"
+      },
+
+      {
+        name: "Cable Side Raises",
+        weight: 30,
+        reps: 10,
+        sets: 3,
+        drops: "20 × 12, 10 × 12"
+      },
+
+      {
+        name: "Cable Rear Delts",
+        weight: 20,
+        reps: 10,
+        sets: 3,
+        drops: ""
+      },
+
+      {
+        name: "Wood Choppers",
+        weight: 60,
+        reps: 10,
+        sets: 3,
+        drops: "50 × 12, 40 × 12, 30 × 12, 20 × 12"
+      },
+
+      {
+        name: "Cable Crunches",
+        weight: 120,
+        reps: 12,
+        sets: 1,
+        drops: "110 × 12, 100 × 12, 90 × 12, 80 × 12, 70 × 12, 60 × 12, 50 × 12, 40 × 12, 30 × 12, 20 × 12"
+      },
+
+      {
+        name: "Leg Raises",
+        weight: 0,
+        reps: 12,
+        sets: 11,
+        drops: "Bodyweight"
+      }
+
+    ]
   }
 
 };
@@ -315,6 +569,7 @@ function showWorkout(type) {
   currentWorkout = type;
 
   document.getElementById("home").classList.add("hidden");
+  document.getElementById("complete").classList.add("hidden");
   document.getElementById("workout").classList.remove("hidden");
 
   document.getElementById("workoutTitle").innerText =
@@ -330,79 +585,87 @@ function renderExercises(type) {
 
   list.innerHTML = "";
 
-  if (workouts[type].exercises.length === 0) {
+  workouts[type].exercises.forEach(function(exercise, index) {
 
-    list.innerHTML =
-      "<p>We'll build this workout next.</p>";
+    let html = "";
 
-    return;
-  }
+    html += '<div class="exercise">';
 
+    html += '<h3>' + exercise.name + '</h3>';
 
-  workouts[type].exercises.forEach((exercise, index) => {
+    if (exercise.weight > 0) {
 
-    let html = `
-      <div class="exercise">
+      html +=
+        '<div class="last">' +
+        'Last workout: <strong>' +
+        exercise.weight +
+        ' lb × ' +
+        exercise.reps +
+        '</strong>' +
+        '</div>';
 
-        <h3>${exercise.name}</h3>
+    } else {
 
-        <div class="last">
-          Last workout:
-          <strong>${exercise.weight} lb × ${exercise.reps}</strong>
-          × ${exercise.sets}
-        </div>
-
-        <button onclick="fillExercise(${index})">
-          🔄 Same as Last Workout
-        </button>
-
-        <div id="sets-${index}">
-    `;
-
-
-    for (let i = 1; i <= exercise.sets; i++) {
-
-      html += `
-        <div class="set">
-
-          <input
-            type="checkbox"
-            id="check-${index}-${i}"
-          >
-
-          Set ${i}
-
-          <input
-            type="number"
-            value="${exercise.weight}"
-            id="weight-${index}-${i}"
-          >
-
-          lb
-
-          <input
-            type="number"
-            value="${exercise.reps}"
-            id="reps-${index}-${i}"
-          >
-
-          reps
-
-        </div>
-      `;
+      html +=
+        '<div class="last">Bodyweight</div>';
 
     }
 
 
-    html += `
-        </div>
+    html +=
+      '<button class="button" onclick="fillExercise(' +
+      index +
+      ')">🔄 Same as Last Workout</button>';
 
-        <p class="last">
-          Drop sets: ${exercise.drops}
-        </p>
 
-      </div>
-    `;
+    html += '<div>';
+
+
+    for (let i = 1; i <= exercise.sets; i++) {
+
+      let displayWeight =
+        exercise.weight > 0 ? exercise.weight : "";
+
+      html +=
+        '<div class="set-row">' +
+
+        '<input type="checkbox" id="check-' +
+        index + '-' + i + '">' +
+
+        '<span>Set ' + i + '</span>' +
+
+        '<input class="number-input" type="number" ' +
+        'id="weight-' + index + '-' + i + '" ' +
+        'value="' + displayWeight + '">' +
+
+        '<span>lb</span>' +
+
+        '<input class="number-input" type="number" ' +
+        'id="reps-' + index + '-' + i + '" ' +
+        'value="' + exercise.reps + '">' +
+
+        '<span>reps</span>' +
+
+        '</div>';
+
+    }
+
+
+    html += '</div>';
+
+
+    if (exercise.drops !== "") {
+
+      html +=
+        '<div class="drop">' +
+        '<strong>Drop sets:</strong> ' +
+        exercise.drops +
+        '</div>';
+
+    }
+
+
+    html += '</div>';
 
     list.innerHTML += html;
 
@@ -413,16 +676,21 @@ function renderExercises(type) {
 
 function fillExercise(index) {
 
-  const exercise = workouts[currentWorkout].exercises[index];
+  const exercise =
+    workouts[currentWorkout].exercises[index];
 
   for (let i = 1; i <= exercise.sets; i++) {
 
-    document.getElementById(
-      `weight-${index}-${i}`
-    ).value = exercise.weight;
+    if (exercise.weight > 0) {
+
+      document.getElementById(
+        "weight-" + index + "-" + i
+      ).value = exercise.weight;
+
+    }
 
     document.getElementById(
-      `reps-${index}-${i}`
+      "reps-" + index + "-" + i
     ).value = exercise.reps;
 
   }
@@ -433,7 +701,7 @@ function fillExercise(index) {
 function sameAsLast() {
 
   workouts[currentWorkout].exercises.forEach(
-    (exercise, index) => {
+    function(exercise, index) {
 
       fillExercise(index);
 
@@ -445,10 +713,12 @@ function sameAsLast() {
 
 function finishWorkout() {
 
-  alert(
-    "🔥 Workout Complete!\n\n" +
-    "Great work. Your workout has been recorded."
-  );
+  document.getElementById("workout").classList.add("hidden");
+  document.getElementById("complete").classList.remove("hidden");
+
+  document.getElementById("completeMessage").innerText =
+    workouts[currentWorkout].title +
+    " is logged. Great work!";
 
 }
 
@@ -456,10 +726,10 @@ function finishWorkout() {
 function goHome() {
 
   document.getElementById("workout").classList.add("hidden");
+  document.getElementById("complete").classList.add("hidden");
   document.getElementById("home").classList.remove("hidden");
 
 }
-
 
 </script>
 
