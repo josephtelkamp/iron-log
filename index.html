@@ -141,22 +141,8 @@ body {
   border-bottom: 1px solid #333;
 }
 
-.workout-date {
-  color: #aaa;
-  font-size: 14px;
-}
-
 .hidden {
   display: none;
-}
-
-.success {
-  text-align: center;
-  padding: 30px 10px;
-}
-
-.success h2 {
-  font-size: 30px;
 }
 
 .cardio {
@@ -165,6 +151,21 @@ body {
   border-radius: 10px;
   padding: 15px;
   margin-top: 15px;
+}
+
+.message {
+  background: #234d32;
+  border: 1px solid #397a4e;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  margin: 12px 0;
+  display: none;
+}
+
+.success {
+  text-align: center;
+  padding: 30px 10px;
 }
 
 @media (max-width: 600px) {
@@ -189,7 +190,6 @@ body {
 
 <div class="container">
 
-  <!-- DASHBOARD -->
   <div id="home">
 
     <div class="card">
@@ -201,18 +201,18 @@ body {
       <h2>📊 Your Stats</h2>
 
       <div class="stat">
-        <div class="stat-number">7</div>
+        <div class="stat-number" id="workoutCount">7</div>
         <div class="stat-label">Workouts</div>
-      </div>
-
-      <div class="stat">
-        <div class="stat-number">4</div>
-        <div class="stat-label">Training Days</div>
       </div>
 
       <div class="stat">
         <div class="stat-number">30</div>
         <div class="stat-label">Min Cardio</div>
+      </div>
+
+      <div class="stat">
+        <div class="stat-number">🦾</div>
+        <div class="stat-label">Iron Strong</div>
       </div>
     </div>
 
@@ -254,14 +254,14 @@ body {
       <div class="pr">
         Wide Grip Lat Pulldown — <strong>160 × 10</strong>
       </div>
-
-      <div class="pr">
-        Dumbbell Calf Raise — <strong>105 × 20</strong>
-      </div>
     </div>
 
     <div class="card">
       <h2>📅 Recent Workouts</h2>
+
+      <div class="pr">
+        <strong>8/17/26</strong> — Chest & Triceps
+      </div>
 
       <div class="pr">
         <strong>8/16/26</strong> — Shoulders & Abs
@@ -283,7 +283,6 @@ body {
   </div>
 
 
-  <!-- WORKOUT SCREEN -->
   <div id="workout" class="hidden">
 
     <button class="button back-button" onclick="goHome()">
@@ -294,10 +293,9 @@ body {
 
       <h2 id="workoutTitle"></h2>
 
-      <p>
-        Your previous workout is already loaded.
-        If nothing changed, use:
-      </p>
+      <div id="saveMessage" class="message">
+        🔄 Loaded your last workout!
+      </div>
 
       <button class="button" onclick="sameAsLast()">
         🔄 Same as Last Workout
@@ -308,6 +306,7 @@ body {
       <div class="cardio">
         <h3>🚴 Cardio</h3>
         <p><strong>Exercise Bike — 30 minutes</strong></p>
+
         <label>
           <input type="checkbox" id="cardioCheck">
           Cardio Complete
@@ -323,7 +322,6 @@ body {
   </div>
 
 
-  <!-- COMPLETE SCREEN -->
   <div id="complete" class="hidden">
 
     <div class="card success">
@@ -331,6 +329,10 @@ body {
       <h2>🔥 Workout Complete!</h2>
 
       <p id="completeMessage"></p>
+
+      <p>
+        💾 Your workout has been saved.
+      </p>
 
       <p>
         🚴 30 minutes of cardio logged.
@@ -352,7 +354,7 @@ body {
 const workouts = {
 
   push: {
-    title: "💪 Push Day",
+    title: "💪 Chest & Triceps",
     exercises: [
 
       {
@@ -564,6 +566,20 @@ const workouts = {
 let currentWorkout = null;
 
 
+function getSavedWorkout(type) {
+
+  const saved = localStorage.getItem(
+    "ironLog_" + type
+  );
+
+  if (saved) {
+    return JSON.parse(saved);
+  }
+
+  return null;
+}
+
+
 function showWorkout(type) {
 
   currentWorkout = type;
@@ -576,6 +592,7 @@ function showWorkout(type) {
     workouts[type].title;
 
   renderExercises(type);
+
 }
 
 
@@ -585,91 +602,114 @@ function renderExercises(type) {
 
   list.innerHTML = "";
 
-  workouts[type].exercises.forEach(function(exercise, index) {
+  const savedWorkout = getSavedWorkout(type);
 
-    let html = "";
 
-    html += '<div class="exercise">';
+  workouts[type].exercises.forEach(
+    function(exercise, index) {
 
-    html += '<h3>' + exercise.name + '</h3>';
+      let savedExercise = null;
 
-    if (exercise.weight > 0) {
+      if (savedWorkout && savedWorkout[index]) {
+        savedExercise = savedWorkout[index];
+      }
+
+
+      const startingWeight =
+        savedExercise
+          ? savedExercise.weight
+          : exercise.weight;
+
+      const startingReps =
+        savedExercise
+          ? savedExercise.reps
+          : exercise.reps;
+
+
+      let html = "";
+
+      html += '<div class="exercise">';
+
+      html += '<h3>' + exercise.name + '</h3>';
 
       html +=
         '<div class="last">' +
         'Last workout: <strong>' +
-        exercise.weight +
-        ' lb × ' +
-        exercise.reps +
+        (startingWeight || "Bodyweight") +
+        (startingWeight ? " lb" : "") +
+        ' × ' +
+        startingReps +
         '</strong>' +
         '</div>';
 
-    } else {
 
       html +=
-        '<div class="last">Bodyweight</div>';
+        '<button class="button" onclick="fillExercise(' +
+        index +
+        ')">' +
+        '🔄 Same as Last Workout' +
+        '</button>';
+
+
+      for (let i = 1; i <= exercise.sets; i++) {
+
+        let setWeight = startingWeight;
+        let setReps = startingReps;
+
+        if (
+          savedExercise &&
+          savedExercise.sets &&
+          savedExercise.sets[i - 1]
+        ) {
+          setWeight =
+            savedExercise.sets[i - 1].weight;
+
+          setReps =
+            savedExercise.sets[i - 1].reps;
+        }
+
+
+        html +=
+          '<div class="set-row">' +
+
+          '<input type="checkbox" id="check-' +
+          index + '-' + i + '">' +
+
+          '<span>Set ' + i + '</span>' +
+
+          '<input class="number-input" type="number" ' +
+          'id="weight-' + index + '-' + i + '" ' +
+          'value="' + (setWeight || "") + '">' +
+
+          '<span>lb</span>' +
+
+          '<input class="number-input" type="number" ' +
+          'id="reps-' + index + '-' + i + '" ' +
+          'value="' + setReps + '">' +
+
+          '<span>reps</span>' +
+
+          '</div>';
+
+      }
+
+
+      if (exercise.drops !== "") {
+
+        html +=
+          '<div class="drop">' +
+          '<strong>Drop sets:</strong> ' +
+          exercise.drops +
+          '</div>';
+
+      }
+
+      html += '</div>';
+
+      list.innerHTML += html;
 
     }
-
-
-    html +=
-      '<button class="button" onclick="fillExercise(' +
-      index +
-      ')">🔄 Same as Last Workout</button>';
-
-
-    html += '<div>';
-
-
-    for (let i = 1; i <= exercise.sets; i++) {
-
-      let displayWeight =
-        exercise.weight > 0 ? exercise.weight : "";
-
-      html +=
-        '<div class="set-row">' +
-
-        '<input type="checkbox" id="check-' +
-        index + '-' + i + '">' +
-
-        '<span>Set ' + i + '</span>' +
-
-        '<input class="number-input" type="number" ' +
-        'id="weight-' + index + '-' + i + '" ' +
-        'value="' + displayWeight + '">' +
-
-        '<span>lb</span>' +
-
-        '<input class="number-input" type="number" ' +
-        'id="reps-' + index + '-' + i + '" ' +
-        'value="' + exercise.reps + '">' +
-
-        '<span>reps</span>' +
-
-        '</div>';
-
-    }
-
-
-    html += '</div>';
-
-
-    if (exercise.drops !== "") {
-
-      html +=
-        '<div class="drop">' +
-        '<strong>Drop sets:</strong> ' +
-        exercise.drops +
-        '</div>';
-
-    }
-
-
-    html += '</div>';
-
-    list.innerHTML += html;
-
-  });
+  );
 
 }
 
@@ -679,21 +719,45 @@ function fillExercise(index) {
   const exercise =
     workouts[currentWorkout].exercises[index];
 
+  const savedWorkout =
+    getSavedWorkout(currentWorkout);
+
+  let weight = exercise.weight;
+  let reps = exercise.reps;
+
+
+  if (
+    savedWorkout &&
+    savedWorkout[index]
+  ) {
+
+    weight =
+      savedWorkout[index].weight;
+
+    reps =
+      savedWorkout[index].reps;
+
+  }
+
+
   for (let i = 1; i <= exercise.sets; i++) {
 
-    if (exercise.weight > 0) {
+    if (weight > 0) {
 
       document.getElementById(
         "weight-" + index + "-" + i
-      ).value = exercise.weight;
+      ).value = weight;
 
     }
 
     document.getElementById(
       "reps-" + index + "-" + i
-    ).value = exercise.reps;
+    ).value = reps;
 
   }
+
+
+  showMessage("🔄 Loaded your last workout!");
 
 }
 
@@ -711,14 +775,108 @@ function sameAsLast() {
 }
 
 
+function showMessage(text) {
+
+  const message =
+    document.getElementById("saveMessage");
+
+  message.innerText = text;
+  message.style.display = "block";
+
+  setTimeout(
+    function() {
+      message.style.display = "none";
+    },
+    2000
+  );
+
+}
+
+
 function finishWorkout() {
+
+  const workoutData = [];
+
+
+  workouts[currentWorkout].exercises.forEach(
+    function(exercise, index) {
+
+      const sets = [];
+
+      for (
+        let i = 1;
+        i <= exercise.sets;
+        i++
+      ) {
+
+        const weight =
+          document.getElementById(
+            "weight-" + index + "-" + i
+          ).value;
+
+        const reps =
+          document.getElementById(
+            "reps-" + index + "-" + i
+          ).value;
+
+        const completed =
+          document.getElementById(
+            "check-" + index + "-" + i
+          ).checked;
+
+
+        sets.push({
+          weight: weight,
+          reps: reps,
+          completed: completed
+        });
+
+      }
+
+
+      workoutData.push({
+
+        name: exercise.name,
+
+        weight:
+          sets[0].weight,
+
+        reps:
+          sets[0].reps,
+
+        sets: sets
+
+      });
+
+    }
+  );
+
+
+  localStorage.setItem(
+    "ironLog_" + currentWorkout,
+    JSON.stringify(workoutData)
+  );
+
+
+  let count =
+    parseInt(
+      localStorage.getItem("ironLog_workoutCount")
+    ) || 7;
+
+  count++;
+
+  localStorage.setItem(
+    "ironLog_workoutCount",
+    count
+  );
+
 
   document.getElementById("workout").classList.add("hidden");
   document.getElementById("complete").classList.remove("hidden");
 
   document.getElementById("completeMessage").innerText =
     workouts[currentWorkout].title +
-    " is logged. Great work!";
+    " has been saved to Iron Log.";
 
 }
 
@@ -730,6 +888,7 @@ function goHome() {
   document.getElementById("home").classList.remove("hidden");
 
 }
+
 
 </script>
 
