@@ -168,6 +168,12 @@ body {
   padding: 30px 10px;
 }
 
+.empty {
+  color: #aaa;
+  text-align: center;
+  padding: 10px;
+}
+
 @media (max-width: 600px) {
   .stat {
     width: 100%;
@@ -201,18 +207,18 @@ body {
       <h2>📊 Your Stats</h2>
 
       <div class="stat">
-        <div class="stat-number" id="workoutCount">7</div>
+        <div class="stat-number" id="workoutCount">0</div>
         <div class="stat-label">Workouts</div>
       </div>
 
       <div class="stat">
-        <div class="stat-number">30</div>
-        <div class="stat-label">Min Cardio</div>
+        <div class="stat-number" id="cardioMinutes">0</div>
+        <div class="stat-label">Cardio Minutes</div>
       </div>
 
       <div class="stat">
-        <div class="stat-number">🦾</div>
-        <div class="stat-label">Iron Strong</div>
+        <div class="stat-number" id="streak">0</div>
+        <div class="stat-label">Workout Streak</div>
       </div>
     </div>
 
@@ -258,26 +264,7 @@ body {
 
     <div class="card">
       <h2>📅 Recent Workouts</h2>
-
-      <div class="pr">
-        <strong>8/17/26</strong> — Chest & Triceps
-      </div>
-
-      <div class="pr">
-        <strong>8/16/26</strong> — Shoulders & Abs
-      </div>
-
-      <div class="pr">
-        <strong>8/15/26</strong> — Legs
-      </div>
-
-      <div class="pr">
-        <strong>8/14/26</strong> — Back & Biceps
-      </div>
-
-      <div class="pr">
-        <strong>8/13/26</strong> — Chest & Triceps
-      </div>
+      <div id="recentWorkouts"></div>
     </div>
 
   </div>
@@ -293,9 +280,7 @@ body {
 
       <h2 id="workoutTitle"></h2>
 
-      <div id="saveMessage" class="message">
-        🔄 Loaded your last workout!
-      </div>
+      <div id="saveMessage" class="message"></div>
 
       <button class="button" onclick="sameAsLast()">
         🔄 Same as Last Workout
@@ -305,7 +290,10 @@ body {
 
       <div class="cardio">
         <h3>🚴 Cardio</h3>
-        <p><strong>Exercise Bike — 30 minutes</strong></p>
+
+        <p>
+          <strong>Exercise Bike — 30 minutes</strong>
+        </p>
 
         <label>
           <input type="checkbox" id="cardioCheck">
@@ -330,13 +318,9 @@ body {
 
       <p id="completeMessage"></p>
 
-      <p>
-        💾 Your workout has been saved.
-      </p>
+      <p>💾 Your workout has been saved.</p>
 
-      <p>
-        🚴 30 minutes of cardio logged.
-      </p>
+      <p>🚴 30 minutes of cardio logged.</p>
 
       <button class="button" onclick="goHome()">
         ← Back to Iron Log
@@ -566,17 +550,41 @@ const workouts = {
 let currentWorkout = null;
 
 
+function getWorkoutHistory() {
+
+  const history =
+    localStorage.getItem("ironLog_history");
+
+  if (!history) {
+    return [];
+  }
+
+  return JSON.parse(history);
+
+}
+
+
+function saveWorkoutHistory(history) {
+
+  localStorage.setItem(
+    "ironLog_history",
+    JSON.stringify(history)
+  );
+
+}
+
+
 function getSavedWorkout(type) {
 
-  const saved = localStorage.getItem(
-    "ironLog_" + type
-  );
+  const saved =
+    localStorage.getItem("ironLog_" + type);
 
   if (saved) {
     return JSON.parse(saved);
   }
 
   return null;
+
 }
 
 
@@ -591,6 +599,8 @@ function showWorkout(type) {
   document.getElementById("workoutTitle").innerText =
     workouts[type].title;
 
+  document.getElementById("cardioCheck").checked = false;
+
   renderExercises(type);
 
 }
@@ -598,11 +608,13 @@ function showWorkout(type) {
 
 function renderExercises(type) {
 
-  const list = document.getElementById("exerciseList");
+  const list =
+    document.getElementById("exerciseList");
 
   list.innerHTML = "";
 
-  const savedWorkout = getSavedWorkout(type);
+  const savedWorkout =
+    getSavedWorkout(type);
 
 
   workouts[type].exercises.forEach(
@@ -610,8 +622,14 @@ function renderExercises(type) {
 
       let savedExercise = null;
 
-      if (savedWorkout && savedWorkout[index]) {
-        savedExercise = savedWorkout[index];
+      if (
+        savedWorkout &&
+        savedWorkout[index]
+      ) {
+
+        savedExercise =
+          savedWorkout[index];
+
       }
 
 
@@ -630,7 +648,10 @@ function renderExercises(type) {
 
       html += '<div class="exercise">';
 
-      html += '<h3>' + exercise.name + '</h3>';
+      html +=
+        '<h3>' +
+        exercise.name +
+        '</h3>';
 
       html +=
         '<div class="last">' +
@@ -643,53 +664,84 @@ function renderExercises(type) {
         '</div>';
 
 
-      html +=
-        '<button class="button" onclick="fillExercise(' +
-        index +
-        ')">' +
-        '🔄 Same as Last Workout' +
-        '</button>';
+      for (
+        let i = 1;
+        i <= exercise.sets;
+        i++
+      ) {
 
+        let setWeight =
+          startingWeight;
 
-      for (let i = 1; i <= exercise.sets; i++) {
+        let setReps =
+          startingReps;
 
-        let setWeight = startingWeight;
-        let setReps = startingReps;
+        let completed =
+          false;
+
 
         if (
           savedExercise &&
           savedExercise.sets &&
           savedExercise.sets[i - 1]
         ) {
+
           setWeight =
             savedExercise.sets[i - 1].weight;
 
           setReps =
             savedExercise.sets[i - 1].reps;
+
+          completed =
+            savedExercise.sets[i - 1].completed;
+
         }
 
 
         html +=
           '<div class="set-row">' +
 
-          '<input type="checkbox" id="check-' +
-          index + '-' + i + '">' +
+          '<input type="checkbox" ' +
+          'id="check-' +
+          index +
+          '-' +
+          i +
+          '">';
 
-          '<span>Set ' + i + '</span>' +
+        html +=
+          '<span>Set ' +
+          i +
+          '</span>';
 
-          '<input class="number-input" type="number" ' +
-          'id="weight-' + index + '-' + i + '" ' +
-          'value="' + (setWeight || "") + '">' +
+        html +=
+          '<input class="number-input" ' +
+          'type="number" ' +
+          'id="weight-' +
+          index +
+          '-' +
+          i +
+          '" ' +
+          'value="' +
+          (setWeight || "") +
+          '">';
 
-          '<span>lb</span>' +
+        html += '<span>lb</span>';
 
-          '<input class="number-input" type="number" ' +
-          'id="reps-' + index + '-' + i + '" ' +
-          'value="' + setReps + '">' +
+        html +=
+          '<input class="number-input" ' +
+          'type="number" ' +
+          'id="reps-' +
+          index +
+          '-' +
+          i +
+          '" ' +
+          'value="' +
+          setReps +
+          '">';
 
-          '<span>reps</span>' +
+        html += '<span>reps</span>';
 
-          '</div>';
+        html += '</div>';
 
       }
 
@@ -708,86 +760,115 @@ function renderExercises(type) {
 
       list.innerHTML += html;
 
+
+      if (
+        savedExercise &&
+        savedExercise.sets
+      ) {
+
+        savedExercise.sets.forEach(
+          function(set, setIndex) {
+
+            const box =
+              document.getElementById(
+                "check-" +
+                index +
+                "-" +
+                (setIndex + 1)
+              );
+
+            if (box) {
+              box.checked =
+                set.completed;
+            }
+
+          }
+        );
+
+      }
+
     }
   );
-
-}
-
-
-function fillExercise(index) {
-
-  const exercise =
-    workouts[currentWorkout].exercises[index];
-
-  const savedWorkout =
-    getSavedWorkout(currentWorkout);
-
-  let weight = exercise.weight;
-  let reps = exercise.reps;
-
-
-  if (
-    savedWorkout &&
-    savedWorkout[index]
-  ) {
-
-    weight =
-      savedWorkout[index].weight;
-
-    reps =
-      savedWorkout[index].reps;
-
-  }
-
-
-  for (let i = 1; i <= exercise.sets; i++) {
-
-    if (weight > 0) {
-
-      document.getElementById(
-        "weight-" + index + "-" + i
-      ).value = weight;
-
-    }
-
-    document.getElementById(
-      "reps-" + index + "-" + i
-    ).value = reps;
-
-  }
-
-
-  showMessage("🔄 Loaded your last workout!");
 
 }
 
 
 function sameAsLast() {
 
+  const savedWorkout =
+    getSavedWorkout(currentWorkout);
+
+
+  if (!savedWorkout) {
+
+    showMessage(
+      "No previous workout saved yet."
+    );
+
+    return;
+
+  }
+
+
   workouts[currentWorkout].exercises.forEach(
     function(exercise, index) {
 
-      fillExercise(index);
+      const savedExercise =
+        savedWorkout[index];
+
+      if (!savedExercise) {
+        return;
+      }
+
+
+      for (
+        let i = 1;
+        i <= exercise.sets;
+        i++
+      ) {
+
+        const savedSet =
+          savedExercise.sets[i - 1];
+
+        if (!savedSet) {
+          continue;
+        }
+
+
+        document.getElementById(
+          "weight-" +
+          index +
+          "-" +
+          i
+        ).value =
+          savedSet.weight;
+
+
+        document.getElementById(
+          "reps-" +
+          index +
+          "-" +
+          i
+        ).value =
+          savedSet.reps;
+
+
+        document.getElementById(
+          "check-" +
+          index +
+          "-" +
+          i
+        ).checked =
+          true;
+
+      }
 
     }
   );
 
-}
 
-
-function showMessage(text) {
-
-  const message =
-    document.getElementById("saveMessage");
-
-  message.innerText = text;
-  message.style.display = "block";
-
-  setTimeout(
-    function() {
-      message.style.display = "none";
-    },
-    2000
+  showMessage(
+    "🔄 Last workout loaded and sets checked!"
   );
 
 }
@@ -803,6 +884,7 @@ function finishWorkout() {
 
       const sets = [];
 
+
       for (
         let i = 1;
         i <= exercise.sets;
@@ -811,17 +893,26 @@ function finishWorkout() {
 
         const weight =
           document.getElementById(
-            "weight-" + index + "-" + i
+            "weight-" +
+            index +
+            "-" +
+            i
           ).value;
 
         const reps =
           document.getElementById(
-            "reps-" + index + "-" + i
+            "reps-" +
+            index +
+            "-" +
+            i
           ).value;
 
         const completed =
           document.getElementById(
-            "check-" + index + "-" + i
+            "check-" +
+            index +
+            "-" +
+            i
           ).checked;
 
 
@@ -853,42 +944,230 @@ function finishWorkout() {
 
 
   localStorage.setItem(
-    "ironLog_" + currentWorkout,
+    "ironLog_" +
+    currentWorkout,
     JSON.stringify(workoutData)
   );
 
 
-  let count =
-    parseInt(
-      localStorage.getItem("ironLog_workoutCount")
-    ) || 7;
+  const today =
+    new Date();
 
-  count++;
+  const dateString =
+    (today.getMonth() + 1) +
+    "/" +
+    today.getDate() +
+    "/" +
+    today.getFullYear().toString().slice(-2);
 
-  localStorage.setItem(
-    "ironLog_workoutCount",
-    count
-  );
+
+  const history =
+    getWorkoutHistory();
+
+
+  history.unshift({
+
+    date: dateString,
+
+    type: currentWorkout,
+
+    title:
+      workouts[currentWorkout].title,
+
+    cardio: document.getElementById(
+      "cardioCheck"
+    ).checked
+      ? 30
+      : 0
+
+  });
+
+
+  saveWorkoutHistory(history);
 
 
   document.getElementById("workout").classList.add("hidden");
+
   document.getElementById("complete").classList.remove("hidden");
 
-  document.getElementById("completeMessage").innerText =
+
+  document.getElementById(
+    "completeMessage"
+  ).innerText =
     workouts[currentWorkout].title +
     " has been saved to Iron Log.";
 
 }
 
 
-function goHome() {
+function updateDashboard() {
 
-  document.getElementById("workout").classList.add("hidden");
-  document.getElementById("complete").classList.add("hidden");
-  document.getElementById("home").classList.remove("hidden");
+  const history =
+    getWorkoutHistory();
+
+
+  document.getElementById(
+    "workoutCount"
+  ).innerText =
+    history.length;
+
+
+  let cardio =
+    0;
+
+
+  history.forEach(
+    function(workout) {
+
+      cardio +=
+        workout.cardio || 0;
+
+    }
+  );
+
+
+  document.getElementById(
+    "cardioMinutes"
+  ).innerText =
+    cardio;
+
+
+  document.getElementById(
+    "streak"
+  ).innerText =
+    calculateStreak(history);
+
+
+  const recent =
+    document.getElementById(
+      "recentWorkouts"
+    );
+
+
+  if (history.length === 0) {
+
+    recent.innerHTML =
+      '<div class="empty">' +
+      'No workouts saved yet.' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  recent.innerHTML = "";
+
+
+  history.slice(0, 10).forEach(
+    function(workout) {
+
+      recent.innerHTML +=
+        '<div class="pr">' +
+        '<strong>' +
+        workout.date +
+        '</strong> — ' +
+        workout.title +
+        '</div>';
+
+    }
+  );
 
 }
 
+
+function calculateStreak(history) {
+
+  if (history.length === 0) {
+    return 0;
+  }
+
+
+  let streak = 1;
+
+
+  for (
+    let i = 1;
+    i < history.length;
+    i++
+  ) {
+
+    const previous =
+      new Date(history[i - 1].date);
+
+    const current =
+      new Date(history[i].date);
+
+
+    const difference =
+      Math.abs(
+        previous - current
+      ) /
+      (1000 * 60 * 60 * 24);
+
+
+    if (difference <= 1) {
+      streak++;
+    } else {
+      break;
+    }
+
+  }
+
+
+  return streak;
+
+}
+
+
+function showMessage(text) {
+
+  const message =
+    document.getElementById(
+      "saveMessage"
+    );
+
+  message.innerText =
+    text;
+
+  message.style.display =
+    "block";
+
+
+  setTimeout(
+    function() {
+
+      message.style.display =
+        "none";
+
+    },
+    2500
+  );
+
+}
+
+
+function goHome() {
+
+  document.getElementById(
+    "workout"
+  ).classList.add("hidden");
+
+  document.getElementById(
+    "complete"
+  ).classList.add("hidden");
+
+  document.getElementById(
+    "home"
+  ).classList.remove("hidden");
+
+
+  updateDashboard();
+
+}
+
+
+updateDashboard();
 
 </script>
 
