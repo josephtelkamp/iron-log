@@ -314,7 +314,7 @@ button:hover {
 <script>
 
 /* =========================================================
-   IRON LOG v0.8 — IRON COACH
+   IRON LOG v0.8 â€” IRON COACH
    ========================================================= */
 
 const STORAGE_KEY = "ironLog_history_v06";
@@ -886,11 +886,17 @@ function getMainReps(exercise) {
 
 function getCoachIncrease(exerciseName, type) {
 
+    const name = (exerciseName || "").toLowerCase();
+
+    if (name.includes("cable")) {
+        return 10;
+    }
+
     if (type === "legs") {
 
         if (
-            exerciseName.toLowerCase().includes("squat") ||
-            exerciseName.toLowerCase().includes("deadlift")
+            name.includes("squat") ||
+            name.includes("deadlift")
         ) {
             return 10;
         }
@@ -957,7 +963,7 @@ function getCoachRecommendation(
             exercise: exercise.name,
 
             html:
-                `Last: <strong>${lastWeight} lbs × ${lastReps}</strong>.<br>
+                `Last: <strong>${lastWeight} lbs Ã— ${lastReps}</strong>.<br>
                  Some main sets were not completed.
                  <strong>Stay at ${lastWeight} lbs</strong>
                  and build the reps before increasing.`
@@ -1018,7 +1024,7 @@ function getCoachRecommendation(
             exercise: exercise.name,
 
             html:
-                `Last: <strong>${lastWeight} lbs × ${lastReps}</strong>.<br>
+                `Last: <strong>${lastWeight} lbs Ã— ${lastReps}</strong>.<br>
                  You've successfully held this weight across
                  multiple workouts.<br>
                  <strong>Coach: Try ${suggestedWeight} lbs today.</strong><br>
@@ -1036,7 +1042,7 @@ function getCoachRecommendation(
         exercise: exercise.name,
 
         html:
-            `Last: <strong>${lastWeight} lbs × ${lastReps}</strong>.<br>
+            `Last: <strong>${lastWeight} lbs Ã— ${lastReps}</strong>.<br>
              Complete all your main sets at this weight again.
              If they feel strong, Coach will look for a
              progression opportunity next time.`
@@ -1089,7 +1095,7 @@ function buildCoachBox(history, type) {
         return `
             <div class="coach-box">
 
-                <h3>🤖 IRON COACH</h3>
+                <h3>ðŸ¤– IRON COACH</h3>
 
                 <p>
                     Finish your first workout and Coach
@@ -1104,7 +1110,7 @@ function buildCoachBox(history, type) {
     let html = `
         <div class="coach-box">
 
-            <h3>🤖 IRON COACH</h3>
+            <h3>ðŸ¤– IRON COACH</h3>
 
             <p>
                 Here's what Coach sees from your recent history:
@@ -1155,110 +1161,135 @@ function buildCoachBox(history, type) {
    DROP SET DISPLAY
    ========================================================= */
 
-function buildDropDisplay(
-    exercise,
-    lastExercise
-) {
+function buildDropWeights(exercise, lastExercise, currentMainWeight) {
 
-    let drops =
-        exercise.drops
-            ? clone(exercise.drops)
-            : [];
+    const drops = exercise && exercise.drops
+        ? clone(exercise.drops)
+        : [];
 
+    const oldMain = lastExercise
+        ? Number(getMainWeight(lastExercise) || 0)
+        : 0;
 
-    /*
-       If Coach sees that the user has increased the
-       main weight, put the previous working weight at
-       the top of the drop set ladder.
+    const newMain = Number(
+        currentMainWeight ??
+        (exercise ? exercise.weight : 0) ??
+        0
+    );
 
-       Example:
-
-       Previous main = 125
-       New main = 135
-
-       Drop sets become:
-
-       125, 115, 105...
-    */
-
-    if (
-        lastExercise &&
-        drops.length
-    ) {
-
-        const oldMain =
-            getMainWeight(
-                lastExercise
-            );
-
-        const newMain =
-            Number(
-                exercise.weight || 0
-            );
-
-        if (
-            oldMain > 0 &&
-            newMain > oldMain
-        ) {
-
-            drops =
-                [
-                    oldMain,
-                    ...drops.filter(
-                        weight =>
-                            Number(weight) !== oldMain
-                    )
-                ];
-
-        }
-
+    if (oldMain > 0 && newMain > oldMain) {
+        return [
+            oldMain,
+            ...drops.filter(
+                weight => Number(weight) !== oldMain
+            )
+        ];
     }
 
+    return drops;
+}
+
+
+function buildDropDisplay(exercise, lastExercise, currentMainWeight) {
+
+    const drops = buildDropWeights(
+        exercise,
+        lastExercise,
+        currentMainWeight
+    );
 
     if (!drops.length) {
-
         return `
             <div class="drop-display">
-                <div class="drop-display-title">
-                    DROP SETS
-                </div>
-
-                <div class="set-row drop-set">
-                    No drop sets
-                </div>
+                <div class="drop-display-title">DROP SETS</div>
+                <div class="set-row drop-set">No drop sets</div>
             </div>
         `;
-
     }
-
 
     let html = `
         <div class="drop-display">
-
-            <div class="drop-display-title">
-                DROP SETS
-            </div>
+            <div class="drop-display-title">DROP SETS</div>
     `;
 
+    drops.forEach(weight => {
+        html += `
+            <span class="drop-pill">
+                ${weight} lbs Ã— 12
+            </span>
+        `;
+    });
 
-    drops.forEach(
-        (weight, index) => {
+    html += `</div>`;
+    return html;
+}
 
-            html += `
-                <span class="drop-pill">
-                    ${weight} lbs × 12
-                </span>
-            `;
 
+function updateDropDisplayForExercise(type, exerciseIndex) {
+
+    const template = templates[type];
+
+    if (!template || !template.exercises[exerciseIndex]) {
+        return;
+    }
+
+    const exercise = template.exercises[exerciseIndex];
+    const history = getHistory();
+    const lastWorkout = getLastWorkout(history, type);
+
+    let lastExercise = null;
+
+    if (lastWorkout && lastWorkout.exercises) {
+        lastExercise =
+            lastWorkout.exercises.find(
+                e => e.name === exercise.name
+            ) ||
+            lastWorkout.exercises[exerciseIndex] ||
+            null;
+    }
+
+    const weightInput =
+        document.getElementById(
+            `weight-${exerciseIndex}-0`
+        );
+
+    const currentMainWeight =
+        weightInput
+            ? Number(weightInput.value || 0)
+            : Number(exercise.weight || 0);
+
+    const target =
+        document.getElementById(
+            `drop-display-${exerciseIndex}`
+        );
+
+    if (target) {
+        target.innerHTML =
+            buildDropDisplay(
+                exercise,
+                lastExercise,
+                currentMainWeight
+            );
+    }
+}
+
+
+function updateAllDropDisplays(type) {
+
+    const template = templates[type];
+
+    if (!template) {
+        return;
+    }
+
+    template.exercises.forEach(
+        (exercise, exerciseIndex) => {
+            updateDropDisplayForExercise(
+                type,
+                exerciseIndex
+            );
         }
     );
-
-
-    html += `
-        </div>
-    `;
-
-    return html;
 }
 
 
@@ -1337,28 +1368,28 @@ function showDashboard() {
         <button
             onclick="startWorkout('push')"
         >
-            💪 Chest & Triceps
+            ðŸ’ª Chest & Triceps
         </button>
 
 
         <button
             onclick="startWorkout('pull')"
         >
-            🦾 Back & Biceps
+            ðŸ¦¾ Back & Biceps
         </button>
 
 
         <button
             onclick="startWorkout('legs')"
         >
-            🦵 Legs
+            ðŸ¦µ Legs
         </button>
 
 
         <button
             onclick="startWorkout('shoulders')"
         >
-            🔥 Shoulders & Abs
+            ðŸ”¥ Shoulders & Abs
         </button>
 
 
@@ -1366,13 +1397,13 @@ function showDashboard() {
             class="primary"
             onclick="showHistory()"
         >
-            📖 Workout History
+            ðŸ“– Workout History
         </button>
 
 
         <div class="coach-box">
 
-            <h3>🤖 IRON COACH</h3>
+            <h3>ðŸ¤– IRON COACH</h3>
 
             <p>
                 Your personal progression coach is now active.
@@ -1610,14 +1641,16 @@ function startWorkout(type) {
                underneath the main sets.
             */
 
-            const displayExercise =
-                sourceExercise || exercise;
-
+            const currentMainWeight =
+                sets[0]
+                    ? Number(sets[0].weight || 0)
+                    : Number(exercise.weight || 0);
 
             const dropDisplay =
                 buildDropDisplay(
-                    displayExercise,
-                    sourceExercise
+                    exercise,
+                    sourceExercise,
+                    currentMainWeight
                 );
 
 
@@ -1641,7 +1674,9 @@ function startWorkout(type) {
                     ${setsHTML}
 
 
-                    ${dropDisplay}
+                    <div id="drop-display-${exerciseIndex}">
+                        ${dropDisplay}
+                    </div>
 
                 </div>
 
@@ -1665,7 +1700,7 @@ function startWorkout(type) {
             class="back-button"
             onclick="showDashboard()"
         >
-            ← Back
+            â† Back
         </button>
 
 
@@ -1684,7 +1719,7 @@ function startWorkout(type) {
             class="primary"
             onclick="sameAsLastWorkout('${type}')"
         >
-            🔁 Same as Last Workout
+            ðŸ” Same as Last Workout
         </button>
 
 
@@ -1712,10 +1747,38 @@ function startWorkout(type) {
             class="primary"
             onclick="finishWorkout('${type}')"
         >
-            ✅ Finish Workout
+            âœ… Finish Workout
         </button>
 
     `;
+
+    template.exercises.forEach(
+        (exercise, exerciseIndex) => {
+
+            const weightInput =
+                document.getElementById(
+                    `weight-${exerciseIndex}-0`
+                );
+
+            if (weightInput) {
+                weightInput.addEventListener(
+                    "input",
+                    () => updateDropDisplayForExercise(
+                        type,
+                        exerciseIndex
+                    )
+                );
+
+                weightInput.addEventListener(
+                    "change",
+                    () => updateDropDisplayForExercise(
+                        type,
+                        exerciseIndex
+                    )
+                );
+            }
+        }
+    );
 }
 
 
@@ -1822,6 +1885,7 @@ function sameAsLastWorkout(type) {
 
     }
 
+    updateAllDropDisplays(type);
 
     alert(
         `Loaded your ${lastWorkout.name} workout from ${formatDate(lastWorkout.date)}.`
@@ -1833,25 +1897,38 @@ function sameAsLastWorkout(type) {
    FINISH WORKOUT
    ========================================================= */
 
+function getLocalDateString() {
+
+    const now = new Date();
+
+    return `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+    ).padStart(2, "0")}-${String(
+        now.getDate()
+    ).padStart(2, "0")}`;
+}
+
+
 function finishWorkout(type) {
 
-    const template =
-        templates[type];
+    const template = templates[type];
+    const today = getLocalDateString();
+    const history = getHistory();
 
+    const previousWorkout =
+        getPreviousWorkout(
+            history,
+            type,
+            today
+        );
 
     const exercises = [];
 
-
     template.exercises.forEach(
-        (
-            exercise,
-            exerciseIndex
-        ) => {
+        (exercise, exerciseIndex) => {
 
             const sets = [];
-
             let setIndex = 0;
-
 
             while (
                 document.getElementById(
@@ -1864,99 +1941,68 @@ function finishWorkout(type) {
                         `weight-${exerciseIndex}-${setIndex}`
                     ).value;
 
-
                 const reps =
                     document.getElementById(
                         `reps-${exerciseIndex}-${setIndex}`
                     ).value;
-
 
                 const completed =
                     document.getElementById(
                         `check-${exerciseIndex}-${setIndex}`
                     ).checked;
 
-
                 sets.push({
-
-                    weight:
-                        Number(weight),
-
-                    reps:
-                        Number(reps),
-
-                    completed:
-                        completed
-
+                    weight: Number(weight),
+                    reps: Number(reps),
+                    completed: completed
                 });
 
-
                 setIndex++;
-
             }
 
+            const previousExercise =
+                previousWorkout &&
+                previousWorkout.exercises
+                    ? (
+                        previousWorkout.exercises.find(
+                            e => e.name === exercise.name
+                        ) ||
+                        previousWorkout.exercises[exerciseIndex] ||
+                        null
+                    )
+                    : null;
+
+            const currentMainWeight =
+                sets.length
+                    ? Number(sets[0].weight || 0)
+                    : Number(exercise.weight || 0);
 
             exercises.push({
-
-                name:
-                    exercise.name,
-
-                sets:
-                    sets,
-
-                drops:
-                    clone(
-                        exercise.drops || []
-                    )
-
+                name: exercise.name,
+                sets: sets,
+                drops: buildDropWeights(
+                    exercise,
+                    previousExercise,
+                    currentMainWeight
+                )
             });
-
         }
     );
 
-
-    const today =
-        new Date()
-            .toISOString()
-            .slice(0,10);
-
-
     const workout = {
-
-        id:
-            "workout-" +
-            Date.now(),
-
-        date:
-            today,
-
-        type:
-            type,
-
-        name:
-            template.name,
-
-        exercises:
-            exercises,
-
+        id: "workout-" + Date.now(),
+        date: today,
+        type: type,
+        name: template.name,
+        exercises: exercises,
         cardio: {
-
-            minutes:
-                30,
-
+            minutes: 30,
             completed:
                 document.getElementById(
                     "cardio-check"
                 ).checked
-
         }
-
     };
-
-
-    const history =
-        getHistory();
-
 
     const existingIndex =
         history.findIndex(
@@ -1965,44 +2011,24 @@ function finishWorkout(type) {
                 w.type === type
         );
 
-
-    if (
-        existingIndex >= 0
-    ) {
-
-        history[
-            existingIndex
-        ] = workout;
-
+    if (existingIndex >= 0) {
+        history[existingIndex] = workout;
     } else {
-
-        history.push(
-            workout
-        );
-
+        history.push(workout);
     }
 
-
     history.sort(
-        (a,b) =>
+        (a, b) =>
             new Date(b.date) -
             new Date(a.date)
     );
 
+    saveHistory(history);
 
-    saveHistory(
-        history
-    );
-
-
-    alert(
-        "Workout saved! 💪"
-    );
-
+    alert("Workout saved! ðŸ’ª");
 
     showDashboard();
 }
-
 
 /* =========================================================
    HISTORY
@@ -2028,7 +2054,7 @@ function showHistory() {
                 class="back-button"
                 onclick="showDashboard()"
             >
-                ← Back
+                â† Back
             </button>
 
 
@@ -2076,12 +2102,12 @@ function showHistory() {
                                 <div class="set-row">
 
                                     Set ${index + 1}:
-                                    ${set.weight} lbs ×
+                                    ${set.weight} lbs Ã—
                                     ${set.reps}
 
                                     ${
                                         set.completed
-                                            ? " ✓"
+                                            ? " âœ“"
                                             : ""
                                     }
 
@@ -2113,7 +2139,7 @@ function showHistory() {
                                         class="set-row drop-set"
                                     >
                                         Drop ${index + 1}:
-                                        ${weight} lbs × 12
+                                        ${weight} lbs Ã— 12
                                     </div>
 
                                 `;
@@ -2172,7 +2198,7 @@ function showHistory() {
                 workout.cardio &&
                 workout.cardio.completed
 
-                    ? `${workout.cardio.minutes} min exercise bike ✓`
+                    ? `${workout.cardio.minutes} min exercise bike âœ“`
 
                     : "Cardio not completed";
 
@@ -2236,7 +2262,7 @@ function showHistory() {
             class="back-button"
             onclick="showDashboard()"
         >
-            ← Back
+            â† Back
         </button>
 
 
